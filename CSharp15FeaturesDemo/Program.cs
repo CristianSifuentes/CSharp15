@@ -7,25 +7,64 @@ class Program
     public static void Main(string[] args)
     {
         WriteLine("C# 15.0 Features Demo");
-
-        Unions();
-        DefaultUnionValue();
-        ClosedHierarchies();
-        CollectionExpressionArguments();
-        ExtensionIndexers();
-        LabeledBreakAndContinue();
+        
+        OwnUnions();
+        // Unions();
+        // DefaultUnionValue();
+        // ClosedHierarchies();
+        // CollectionExpressionArguments();
+        // ExtensionIndexers();
+        // LabeledBreakAndContinue();
     }
 
+    static void OwnUnions()
+    {
+        WriteLine("\n-- own union --");
+
+        // Los tipos (Pagado, Pendiente, Cancelado, EstadoPago) se declaran
+        // fuera del método: C# no permite declarar tipos dentro de un método.
+        EstadoPago[] estados =
+        [
+            new Pagado(new DateTime(2026, 11, 1), 150.50m),
+            new Pendiente(new DateTime(2026, 12, 15)),
+            new Cancelado("cliente desistió"),
+        ];
+
+        foreach (var estado in estados)
+            WriteLine(DescribirPago(estado));
+    }
+
+    static string DescribirPago(EstadoPago estado) => estado switch
+    {
+        Pagado p => $"pagado {p.Monto:C} el {p.Fecha:d}",
+        Pendiente p => $"pendiente hasta {p.FechaLimite:d}",
+        Cancelado c => $"cancelado: {c.Motivo}",   // exhaustivo: sin rama _
+    };
+
+    // Agrupan un conjunto cerrado de tipos que no necesitan tener una clase base en común.
     // 1. Union types: a closed set of unrelated case types, matched exhaustively
     static void Unions()
     {
         WriteLine("\n-- union --");
+        
+        // En c#, Result se refiere principal/m
+        // a devolver un objeto con el exito o el fallo de una operacion
+        // en lugar de lanzar excepciones para errores esperados.
 
-        Result ok = new Success(5);               // implicit conversion from each case
+        // Se crea un succes con Value 5, se convierte 
+        // de forma implicita a Result, 
+        // ok es un result que contiene un Succes con Value 5
+        Result ok = new Success(5);     
+       // implicit conversion from each case
+       // error es un result que contiene un Failure con Reason "no balance"
         Result error = new Failure("no balance");
         WriteLine(Describe(ok));                  // ok 5
         WriteLine(Describe(error));               // no balance
 
+        // un struct es un tipo de valor que agrupa datos y
+        // funcionalidad relacionada
+        // camopos, propiedades, metodos, 
+        // constructores, indexadores e  interfaces
         IntOrString a = 5;                        // cases need no common base type
         IntOrString b = "hello";
         WriteLine($"{a.Value} / {b.Value}");      // 5 / hello
@@ -116,6 +155,14 @@ class Program
 public record Success(int Value);
 public record Failure(string Reason);
 public union Result(Success, Failure);
+
+// 1. Los casos: cada uno trae sus propios datos
+public record Pagado(DateTime Fecha, decimal Monto);
+public record Pendiente(DateTime FechaLimite);
+public record Cancelado(string Motivo);
+
+// 2. La unión: un EstadoPago es exactamente uno de esos tres casos
+public union EstadoPago(Pagado, Pendiente, Cancelado);
 
 public union IntOrString(int, string);
 
